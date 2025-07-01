@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/note.dart';
 
 class NoteCard extends StatefulWidget {
   final Note note;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final Function(Note) onTogglePin; // New callback for pin toggle
 
   const NoteCard({
     super.key,
     required this.note,
     required this.onTap,
     required this.onDelete,
+    required this.onTogglePin,
   });
 
   @override
@@ -57,6 +60,11 @@ class _NoteCardState extends State<NoteCard>
     );
   }
 
+  void _togglePin() {
+    HapticFeedback.lightImpact();
+    widget.onTogglePin(widget.note);
+  }
+
   @override
   Widget build(BuildContext context) {
     final cardColor = _getColorFromHex(widget.note.color);
@@ -92,6 +100,12 @@ class _NoteCardState extends State<NoteCard>
                       offset: const Offset(0, 4),
                     ),
                   ],
+                  border: widget.note.isPinned
+                      ? Border.all(
+                          color: const Color(0xFFFFD700), // Gold border for pinned
+                          width: 2,
+                        )
+                      : null,
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
@@ -122,6 +136,33 @@ class _NoteCardState extends State<NoteCard>
                           ),
                         ),
                       ),
+                      
+                      // Pinned indicator star
+                      if (widget.note.isPinned)
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFD700).withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFFD700).withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.star,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      
                       // Content
                       Padding(
                         padding: const EdgeInsets.all(20),
@@ -164,9 +205,35 @@ class _NoteCardState extends State<NoteCard>
                                         widget.onTap();
                                       } else if (value == 'delete') {
                                         widget.onDelete();
+                                      } else if (value == 'pin') {
+                                        _togglePin();
                                       }
                                     },
                                     itemBuilder: (context) => [
+                                      PopupMenuItem(
+                                        value: 'pin',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              widget.note.isPinned 
+                                                  ? Icons.star 
+                                                  : Icons.star_border,
+                                              color: widget.note.isPinned 
+                                                  ? const Color(0xFFFFD700) 
+                                                  : const Color(0xFF6366F1),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              widget.note.isPinned ? 'Unpin' : 'Pin',
+                                              style: TextStyle(
+                                                color: widget.note.isPinned 
+                                                    ? const Color(0xFFFFD700) 
+                                                    : const Color(0xFF6366F1),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                       const PopupMenuItem(
                                         value: 'edit',
                                         child: Row(
@@ -215,7 +282,7 @@ class _NoteCardState extends State<NoteCard>
                             
                             const SizedBox(height: 16),
                             
-                            // Footer with date
+                            // Footer with date and star button
                             Row(
                               children: [
                                 Container(
@@ -237,6 +304,28 @@ class _NoteCardState extends State<NoteCard>
                                   ),
                                 ),
                                 const Spacer(),
+                                
+                                // Star/Pin button
+                                GestureDetector(
+                                  onTap: _togglePin,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      widget.note.isPinned ? Icons.star : Icons.star_border,
+                                      size: 16,
+                                      color: widget.note.isPinned 
+                                          ? const Color(0xFFFFD700) 
+                                          : textColor,
+                                    ),
+                                  ),
+                                ),
+                                
+                                const SizedBox(width: 8),
+                                
                                 AnimatedOpacity(
                                   opacity: _scaleAnimation.value > 1.01 ? 1.0 : 0.0,
                                   duration: const Duration(milliseconds: 150),

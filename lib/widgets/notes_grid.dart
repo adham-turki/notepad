@@ -7,6 +7,7 @@ class NotesGrid extends StatelessWidget {
   final List<Note> notes;
   final Function(Note) onNoteTap;
   final Function(Note) onNoteDelete;
+  final Function(Note) onTogglePin; // New callback for pin toggle
   final Animation<double> fadeAnimation;
 
   const NotesGrid({
@@ -14,6 +15,7 @@ class NotesGrid extends StatelessWidget {
     required this.notes,
     required this.onNoteTap,
     required this.onNoteDelete,
+    required this.onTogglePin,
     required this.fadeAnimation,
   });
 
@@ -35,6 +37,7 @@ class NotesGrid extends StatelessWidget {
               note: notes[index],
               onTap: () => onNoteTap(notes[index]),
               onDelete: () => onNoteDelete(notes[index]),
+              onTogglePin: onTogglePin, // Pass the toggle pin callback
             );
           },
         ),

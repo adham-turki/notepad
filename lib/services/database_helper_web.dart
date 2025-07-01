@@ -90,6 +90,8 @@ class DatabaseHelperWeb {
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
       color: note.color,
+      isImportant: note.isImportant,
+      isPinned: note.isPinned, // Include pinned status
     );
     notes.add(newNote);
     await _saveWebNotes(notes);
@@ -99,7 +101,14 @@ class DatabaseHelperWeb {
   Future<List<Note>> getNotesByUserId(int userId) async {
     final notes = await _getWebNotes();
     final userNotes = notes.where((note) => note.userId == userId).toList();
-    userNotes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    
+    // Sort by pinned status first, then by updated date
+    userNotes.sort((a, b) {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.updatedAt.compareTo(a.updatedAt);
+    });
+    
     return userNotes;
   }
 
@@ -120,5 +129,20 @@ class DatabaseHelperWeb {
     notes.removeWhere((note) => note.id == id);
     await _saveWebNotes(notes);
     return initialLength - notes.length;
+  }
+
+  // New method to toggle pin status
+  Future<int> toggleNotePin(int noteId, bool isPinned) async {
+    final notes = await _getWebNotes();
+    final index = notes.indexWhere((note) => note.id == noteId);
+    if (index != -1) {
+      notes[index] = notes[index].copyWith(
+        isPinned: isPinned,
+        updatedAt: DateTime.now(),
+      );
+      await _saveWebNotes(notes);
+      return 1;
+    }
+    return 0;
   }
 }

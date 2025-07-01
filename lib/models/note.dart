@@ -7,6 +7,7 @@ class Note {
   final DateTime updatedAt;
   final String color;
   final bool isImportant;
+  final bool isPinned; // New field for star/pin functionality
 
   Note({
     this.id,
@@ -17,6 +18,7 @@ class Note {
     DateTime? updatedAt,
     this.color = '#FFFFFF',
     this.isImportant = false,
+    this.isPinned = false, // Default to not pinned
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -30,10 +32,11 @@ class Note {
       'updated_at': updatedAt.toIso8601String(),
       'color': color,
       'is_important': isImportant ? 1 : 0,
+      'is_pinned': isPinned ? 1 : 0, // Add pinned field to map
     };
   }
 
-  // Legacy map without is_important field for compatibility
+  // Legacy map without is_important and is_pinned fields for compatibility
   Map<String, dynamic> toLegacyMap() {
     return {
       'id': id,
@@ -60,6 +63,7 @@ class Note {
           : DateTime.now(),
       color: map['color']?.toString() ?? '#FFFFFF',
       isImportant: _parseBool(map['is_important']),
+      isPinned: _parseBool(map['is_pinned']), // Parse pinned field
     );
   }
 
@@ -83,6 +87,7 @@ class Note {
     DateTime? updatedAt,
     String? color,
     bool? isImportant,
+    bool? isPinned, // Add isPinned to copyWith
   }) {
     return Note(
       id: id ?? this.id,
@@ -93,6 +98,7 @@ class Note {
       updatedAt: updatedAt ?? DateTime.now(),
       color: color ?? this.color,
       isImportant: isImportant ?? this.isImportant,
+      isPinned: isPinned ?? this.isPinned,
     );
   }
 }

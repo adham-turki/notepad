@@ -18,8 +18,9 @@ class DatabaseHelperMobile {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // Increment version for schema changes
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -44,9 +45,29 @@ class DatabaseHelperMobile {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         color TEXT DEFAULT '#FFFFFF',
+        is_important INTEGER DEFAULT 0,
+        is_pinned INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
     ''');
+  }
+
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add the is_pinned column if it doesn't exist
+      await db.execute('''
+        ALTER TABLE notes ADD COLUMN is_pinned INTEGER DEFAULT 0
+      ''');
+      
+      // Add is_important column if it doesn't exist (in case upgrading from very old version)
+      try {
+        await db.execute('''
+          ALTER TABLE notes ADD COLUMN is_important INTEGER DEFAULT 0
+        ''');
+      } catch (e) {
+        // Column might already exist, ignore error
+      }
+    }
   }
 
   // User operations
@@ -95,7 +116,7 @@ class DatabaseHelperMobile {
       'notes',
       where: 'user_id = ?',
       whereArgs: [userId],
-      orderBy: 'updated_at DESC',
+      orderBy: 'is_pinned DESC, updated_at DESC', // Pinned notes first, then by date
     );
 
     return List.generate(maps.length, (i) => Note.fromMap(maps[i]));
@@ -117,6 +138,17 @@ class DatabaseHelperMobile {
       'notes',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  // New method to toggle pin status
+  Future<int> toggleNotePin(int noteId, bool isPinned) async {
+    final db = await database;
+    return await db.update(
+      'notes',
+      {'is_pinned': isPinned ? 1 : 0, 'updated_at': DateTime.now().toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [noteId],
     );
   }
 

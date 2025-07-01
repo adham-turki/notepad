@@ -81,6 +81,15 @@ class DatabaseHelper {
     }
   }
 
+  // New method to toggle pin status
+  Future<int> toggleNotePin(int noteId, bool isPinned) async {
+    if (kIsWeb) {
+      return await _webHelper.toggleNotePin(noteId, isPinned);
+    } else {
+      return await _mobileHelper.toggleNotePin(noteId, isPinned);
+    }
+  }
+
   Future close() async {
     if (!kIsWeb) {
       await _mobileHelper.close();
