@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'color_picker_widgets/color_picker_data.dart';
 import 'color_picker_widgets/color_picker_overlay.dart';
 import 'color_picker_widgets/color_picker_button.dart';
 

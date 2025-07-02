@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/note.dart';
@@ -67,19 +69,32 @@ class _NoteCardState extends State<NoteCard>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth <= 768;
+    
     final cardColor = _getColorFromHex(widget.note.color);
     final isDark = cardColor.computeLuminance() < 0.5;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subtitleColor = isDark ? Colors.white70 : Colors.black54;
 
+    // Responsive sizing
+    final double borderRadius = isMobile ? 16 : 20;
+    final double horizontalPadding = isMobile ? 16 : 20;
+    final double verticalPadding = isMobile ? 16 : 20;
+    final double titleFontSize = isMobile ? 16 : 18;
+    final double contentFontSize = isMobile ? 13 : 14;
+    final double dateFontSize = isMobile ? 10 : 11;
+    final int maxTitleLines = isMobile ? 1 : 2;
+    final int maxContentLines = isMobile ? 3 : 4;
+
     return MouseRegion(
-      onEnter: (_) => _animationController.forward(),
-      onExit: (_) => _animationController.reverse(),
+      onEnter: (_) => !isMobile ? _animationController.forward() : null,
+      onExit: (_) => !isMobile ? _animationController.reverse() : null,
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
           return Transform.scale(
-            scale: _scaleAnimation.value,
+            scale: isMobile ? 1.0 : _scaleAnimation.value, // Disable scale on mobile
             child: GestureDetector(
               onTap: widget.onTap,
               child: Container(
@@ -92,72 +107,88 @@ class _NoteCardState extends State<NoteCard>
                       _getDarkerColor(cardColor),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(borderRadius),
                   boxShadow: [
                     BoxShadow(
-                      color: cardColor.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      color: cardColor.withOpacity(isMobile ? 0.15 : 0.2),
+                      blurRadius: isMobile ? 6 : 8,
+                      offset: Offset(0, isMobile ? 3 : 4),
                     ),
                   ],
                   border: widget.note.isPinned
                       ? Border.all(
                           color: const Color(0xFFFFD700), // Gold border for pinned
-                          width: 2,
+                          width: isMobile ? 1.5 : 2,
                         )
                       : null,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(borderRadius),
                   child: Stack(
                     children: [
-                      // Background pattern
-                      Positioned(
-                        top: -20,
-                        right: -20,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.1),
+                      // Background pattern - smaller on mobile
+                      if (!isMobile) ...[
+                        Positioned(
+                          top: -20,
+                          right: -20,
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
                           ),
                         ),
-                      ),
-                      Positioned(
-                        bottom: -30,
-                        left: -30,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.05),
+                        Positioned(
+                          bottom: -30,
+                          left: -30,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.05),
+                            ),
                           ),
                         ),
-                      ),
+                      ] else ...[
+                        // Smaller background elements for mobile
+                        Positioned(
+                          top: -10,
+                          right: -10,
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.08),
+                            ),
+                          ),
+                        ),
+                      ],
                       
                       // Pinned indicator star
                       if (widget.note.isPinned)
                         Positioned(
-                          top: 12,
-                          left: 12,
+                          top: isMobile ? 8 : 12,
+                          left: isMobile ? 8 : 12,
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: EdgeInsets.all(isMobile ? 4 : 6),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFD700).withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(0xFFFFD700).withOpacity(0.3),
-                                  blurRadius: 4,
+                                  blurRadius: isMobile ? 3 : 4,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.star,
-                              size: 14,
+                              size: isMobile ? 12 : 14,
                               color: Colors.white,
                             ),
                           ),
@@ -165,35 +196,38 @@ class _NoteCardState extends State<NoteCard>
                       
                       // Content
                       Padding(
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                          vertical: verticalPadding,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Header with title and menu
+                           
                             Row(
                               children: [
                                 Expanded(
                                   child: Text(
                                     widget.note.title,
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: titleFontSize,
                                       fontWeight: FontWeight.bold,
                                       color: textColor,
                                       height: 1.2,
                                     ),
-                                    maxLines: 2,
+                                    maxLines: maxTitleLines,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
                                   ),
                                   child: PopupMenuButton<String>(
                                     icon: Icon(
                                       Icons.more_vert,
-                                      size: 18,
+                                      size: isMobile ? 16 : 18,
                                       color: textColor,
                                     ),
                                     color: Colors.white,
@@ -221,6 +255,7 @@ class _NoteCardState extends State<NoteCard>
                                               color: widget.note.isPinned 
                                                   ? const Color(0xFFFFD700) 
                                                   : const Color(0xFF6366F1),
+                                              size: isMobile ? 18 : 20,
                                             ),
                                             const SizedBox(width: 8),
                                             Text(
@@ -229,28 +264,46 @@ class _NoteCardState extends State<NoteCard>
                                                 color: widget.note.isPinned 
                                                     ? const Color(0xFFFFD700) 
                                                     : const Color(0xFF6366F1),
+                                                fontSize: isMobile ? 14 : 16,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'edit',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.edit_outlined, color: Color(0xFF6366F1)),
-                                            SizedBox(width: 8),
-                                            Text('Edit'),
+                                            Icon(
+                                              Icons.edit_outlined, 
+                                              color: const Color(0xFF6366F1),
+                                              size: isMobile ? 18 : 20,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Edit',
+                                              style: TextStyle(fontSize: isMobile ? 14 : 16),
+                                            ),
                                           ],
                                         ),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'delete',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.delete_outline, color: Colors.red),
-                                            SizedBox(width: 8),
-                                            Text('Delete', style: TextStyle(color: Colors.red)),
+                                            Icon(
+                                              Icons.delete_outline, 
+                                              color: Colors.red,
+                                              size: isMobile ? 18 : 20,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Delete',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: isMobile ? 14 : 16,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -261,13 +314,13 @@ class _NoteCardState extends State<NoteCard>
                             ),
                             
                             // Content preview - Always show this section
-                            const SizedBox(height: 12),
+                            SizedBox(height: isMobile ? 8 : 12),
                             Text(
                               widget.note.content.isNotEmpty 
                                   ? widget.note.content
                                   : 'No content',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: contentFontSize,
                                 color: widget.note.content.isNotEmpty 
                                     ? subtitleColor 
                                     : subtitleColor.withOpacity(0.7),
@@ -276,28 +329,28 @@ class _NoteCardState extends State<NoteCard>
                                     ? FontStyle.italic 
                                     : FontStyle.normal,
                               ),
-                              maxLines: 4,
+                              maxLines: maxContentLines,
                               overflow: TextOverflow.ellipsis,
                             ),
                             
-                            const SizedBox(height: 16),
+                            SizedBox(height: isMobile ? 12 : 16),
                             
                             // Footer with date and star button
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isMobile ? 6 : 8,
+                                    vertical: isMobile ? 3 : 4,
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
                                   ),
                                   child: Text(
                                     _formatDate(widget.note.updatedAt),
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: dateFontSize,
                                       color: textColor,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -309,14 +362,14 @@ class _NoteCardState extends State<NoteCard>
                                 GestureDetector(
                                   onTap: _togglePin,
                                   child: Container(
-                                    padding: const EdgeInsets.all(6),
+                                    padding: EdgeInsets.all(isMobile ? 4 : 6),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
                                     ),
                                     child: Icon(
                                       widget.note.isPinned ? Icons.star : Icons.star_border,
-                                      size: 16,
+                                      size: isMobile ? 14 : 16,
                                       color: widget.note.isPinned 
                                           ? const Color(0xFFFFD700) 
                                           : textColor,
@@ -326,22 +379,24 @@ class _NoteCardState extends State<NoteCard>
                                 
                                 const SizedBox(width: 8),
                                 
-                                AnimatedOpacity(
-                                  opacity: _scaleAnimation.value > 1.01 ? 1.0 : 0.0,
-                                  duration: const Duration(milliseconds: 150),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(
-                                      Icons.edit_outlined,
-                                      size: 14,
-                                      color: textColor,
+                                // Edit button - hidden on mobile, shown on hover for desktop
+                                if (!isMobile)
+                                  AnimatedOpacity(
+                                    opacity: _scaleAnimation.value > 1.01 ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 150),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        Icons.edit_outlined,
+                                        size: 14,
+                                        color: textColor,
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                           ],

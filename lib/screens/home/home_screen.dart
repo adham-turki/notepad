@@ -6,9 +6,6 @@ import '../../services/auth_service.dart';
 import '../../services/database_helper.dart';
 import '../auth/login_screen.dart';
 import '../note/note_editor_screen.dart';
-import '../../widgets/home_header.dart';
-import '../../widgets/notes_grid.dart';
-import '../../widgets/pagination_controls.dart';
 import '../../widgets/home_screen_content.dart';
 import '../../widgets/home_screen_fab.dart';
 
